@@ -71,10 +71,13 @@ func (s *scene) handleEvent(event sdl.Event) bool {
 	switch event.(type) {
 	case *sdl.QuitEvent:
 		return true
+	case *sdl.MouseButtonEvent:
+		s.bird.jump()
+	case *sdl.WindowEvent, *sdl.MouseMotionEvent:
 	default:
 		log.Printf("unknown event %T", event)
-		return false
 	}
+	return false
 }
 
 func (s *scene) destroy() {
