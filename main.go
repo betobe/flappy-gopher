@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -42,8 +42,9 @@ func run() error {
 	}
 
 	// temporary hack: window does not appear without this two calls to PumpEvents
-	sdl.PumpEvents()
-	sdl.PumpEvents()
+	// this hack becomes redundant when sdl.WaitEvent() is introduced later in the tutorial
+	// sdl.PumpEvents()
+	// sdl.PumpEvents()
 
 	time.Sleep(1 * time.Second)
 
@@ -55,10 +56,19 @@ func run() error {
 
 	defer s.destroy()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	time.AfterFunc(5*time.Second, cancel)
+	events := make(chan sdl.Event)
+	errc := s.run(events, r)
 
-	return <-s.run(ctx, r)
+	runtime.LockOSThread()
+	for {
+		select {
+		case events <- sdl.WaitEvent():
+		case err := <-errc:
+			fmt.Printf("error found %v", err)
+			return err
+		}
+	}
+
 }
 
 func drawTitle(r *sdl.Renderer) error {
