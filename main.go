@@ -56,15 +56,9 @@ func run() error {
 	defer s.destroy()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	select {
-	case err := <-s.run(ctx, r):
-		return err
-	case <-time.After(5 * time.Second):
-		return nil
-	}
+	time.AfterFunc(5*time.Second, cancel)
 
-	return nil
+	return <-s.run(ctx, r)
 }
 
 func drawTitle(r *sdl.Renderer) error {
