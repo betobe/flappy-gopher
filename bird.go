@@ -88,8 +88,6 @@ func (b *bird) destroy() {
 func (b *bird) touch(p *pipe) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	p.mu.RLock()
-	defer p.mu.RUnlock()
 
 	if p.x > b.x+b.w {
 		return
