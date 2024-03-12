@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -45,27 +45,25 @@ func run() error {
 	sdl.PumpEvents()
 	sdl.PumpEvents()
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 
-	if err := drawBackground(r); err != nil {
-		return fmt.Errorf("could not draw background: %v", err)
-	}
+	s, err := newScene(r)
 
-	time.Sleep(5 * time.Second)
-
-	return nil
-}
-
-func drawBackground(r *sdl.Renderer) error {
-	r.Clear()
-	t, err := img.LoadTexture(r, "res/imgs/background.png")
 	if err != nil {
-		return fmt.Errorf("could not load backgorund image %v", err)
+		return fmt.Errorf("could not create scene: %v", err)
 	}
-	if err := r.Copy(t, nil, nil); err != nil {
-		return fmt.Errorf("could not copy background: %v", err)
+
+	defer s.destroy()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	select {
+	case err := <-s.run(ctx, r):
+		return err
+	case <-time.After(5 * time.Second):
+		return nil
 	}
-	r.Present()
+
 	return nil
 }
 
@@ -74,7 +72,7 @@ func drawTitle(r *sdl.Renderer) error {
 
 	f, err := ttf.OpenFont("res/fonts/Flappy.ttf", 20)
 	if err != nil {
-		return fmt.Errorf("could not loac font: %v", err)
+		return fmt.Errorf("could not load font: %v", err)
 	}
 	defer f.Close()
 
